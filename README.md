@@ -24,6 +24,7 @@ For each entity, there is an API specification which handles the registration. E
 | Primary energy use (non-renewable) | kWh | Grid-based amount of non-renewable energy used to power the data center | 52% of total energy use | [NL annual average 2023](https://www.cbs.nl/en-gb/news/2024/10/nearly-half-the-electricity-produced-in-the-netherlands-is-now-renewable) |
 | Climate Change Potential | CO2-eq | Total climate change potential from both embodied emissions as well as energy-related emissions | 0 |  |
 | Fresh Water Use | m3 | Total use of fresh water in the data center facility, including office space | 0 |  |
+| Adiabatic Depletion Potential | kg Sb-eq | Resource consumption from the manufacturing of servers and mechanical & electrical equipment. We focus on mineral consumption here. [More information](https://helpcenter.ecochain.com/en/articles/9588517-explained-environmental-impact-categories#h_84e6d8b486) | 0 |  |
 
 ## Data Center Facility
 
