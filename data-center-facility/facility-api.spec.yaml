@@ -1,0 +1,586 @@
+openapi: 3.1.0
+info:
+  title: Facility Registry API
+  version: '1.0.0'
+  description: API for registering and managing data center facilities
+
+servers:
+  - url: https://api.registry.example.com/v1
+    description: Registry API v1
+
+paths:
+  /facilities:
+    post:
+      summary: Register a new facility
+      description: Create a new facility entry in the registry
+      operationId: createFacility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityCreate'
+      responses:
+        '201':
+          description: Facility successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List all facilities
+      description: Retrieve a list of all registered facilities
+      operationId: listFacilities
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of facilities to return
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of facilities to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of facilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FacilityResponse'
+                  total:
+                    type: integer
+                    description: Total number of facilities
+                  limit:
+                    type: integer
+                    description: Number of facilities per page
+                  offset:
+                    type: integer
+                    description: Current offset
+
+  /facilities/{facilityId}:
+    parameters:
+      - name: facilityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique facility identifier
+    get:
+      summary: Get facility details
+      description: Retrieve detailed information about a specific facility
+      operationId: getFacility
+      responses:
+        '200':
+          description: Facility details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update facility
+      description: Update all facility information
+      operationId: updateFacility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityUpdate'
+      responses:
+        '200':
+          description: Facility successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete facility
+      description: Remove a facility from the registry
+      operationId: deleteFacility
+      responses:
+        '204':
+          description: Facility successfully deleted
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /facilities/{facilityId}/query:
+    parameters:
+      - name: facilityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique facility identifier
+    post:
+      summary: Query facility metrics
+      description: Retrieve aggregated time series metrics for a facility over a specified time period
+      operationId: queryFacilityMetrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsQuery'
+      responses:
+        '200':
+          description: Aggregated metrics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsQueryResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    MetricsQuery:
+      type: object
+      required:
+        - startTime
+        - endTime
+        - aggregation
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: Start timestamp for the query period
+        endTime:
+          type: string
+          format: date-time
+          description: End timestamp for the query period
+        aggregation:
+          type: string
+          enum: [sum, average]
+          description: Aggregation function to apply over the time period
+        metrics:
+          type: array
+          description: Optional list of specific metrics to query. If not provided, all available metrics will be returned.
+          items:
+            type: string
+            enum:
+              - heatpump_power_consumption_joules
+              - office_energy_use_joules
+              - dc_water_usage_cubic_meters
+              - office_water_usage_cubic_meters
+              - total_generator_energy_joules
+              - generator_load_factor_ratio
+              - grid_transformers_energy_joules
+              - onsite_renewable_energy_joules
+              - it_power_usage_level1_joules
+              - it_power_usage_level2_joules
+              - renewable_energy_certificates_joules
+              - grid_emission_factor_grams
+              - backup_emission_factor_grams
+              - electricity_source
+              - pue_1_ratio
+              - pue_2_ratio
+
+    MetricsQueryResponse:
+      type: object
+      required:
+        - facility_id
+        - startTime
+        - endTime
+        - aggregation
+        - metrics
+      properties:
+        facility_id:
+          type: string
+          description: Facility identifier
+        startTime:
+          type: string
+          format: date-time
+          description: Start timestamp of the query period
+        endTime:
+          type: string
+          format: date-time
+          description: End timestamp of the query period
+        aggregation:
+          type: string
+          enum: [sum, average]
+          description: Aggregation function that was applied
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - value
+              - unit
+              - granularitySeconds
+            properties:
+              name:
+                type: string
+                description: Name of the metric
+              value:
+                type: number
+                format: float
+                description: Aggregated value over the time period
+              unit:
+                type: string
+                enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+                description: Unit of the metric
+              granularitySeconds:
+                type: integer
+                description: Original granularity of the data points in seconds
+    Location:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Latitude coordinate of the facility
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Longitude coordinate of the facility
+
+    FacilityCreate:
+      type: object
+      required:
+        - location
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        embeddedGhgEmissionsFacility:
+          type: number
+          format: float
+          description: Embodied carbon emissions from facility construction (CO2-eq)
+        lifetimeFacility:
+          type: integer
+          minimum: 1
+          description: Expected lifetime of the facility in years
+          default: 15
+        embeddedGhgEmissionsAssets:
+          type: number
+          format: float
+          description: Sum of GHG emissions embodied in assets
+        lifetimeAssets:
+          type: integer
+          minimum: 1
+          description: Expected average lifetime of assets in years
+          default: 10
+        coolingFluids:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - amount
+            properties:
+              type:
+                type: string
+                description: Type identifier for the cooling fluid
+              amount:
+                type: number
+                format: float
+                description: Amount of cooling fluid (kg or m3)
+              gwpFactor:
+                type: number
+                format: float
+                description: Global Warming Potential factor for this fluid type
+        maintenanceHoursGenerator:
+          type: number
+          format: float
+          description: Annual maintenance runtime hours for generators
+        installedCapacity:
+          type: number
+          format: float
+          description: Installed/rated power capacity (watts)
+        gridPowerFeeds:
+          type: integer
+          minimum: 1
+          description: Number of physical power feeds
+          default: 3
+        designPue:
+          type: number
+          format: float
+          minimum: 1
+          description: Design Power Usage Effectiveness
+          default: 1.4
+        tierLevel:
+          type: integer
+          enum: [1, 2, 3, 4]
+          description: Certified/rated tier level
+          default: 3
+        whiteSpaceFloors:
+          type: integer
+          minimum: 1
+          description: Number of floors used for white space
+          default: 1
+        totalSpace:
+          type: number
+          format: float
+          description: Total facility space (m2)
+        whiteSpace:
+          type: number
+          format: float
+          description: Total white space (m2)
+
+    FacilityUpdate:
+      allOf:
+        - $ref: '#/components/schemas/FacilityCreate'
+        - type: object
+          required:
+            - location
+
+    SupportedTimeSeriesMetric:
+      type: object
+      required:
+        - name
+        - unit
+        - description
+      properties:
+        name:
+          type: string
+          description: Prometheus metric name with unit suffix
+        unit:
+          type: string
+          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+          description: Prometheus metric family
+        description:
+          type: string
+          description: Detailed description of what this metric measures
+
+    TimeSeriesDataPoint:
+      type: object
+      required:
+        - name
+        - unit
+        - granularitySeconds
+        - labels
+      properties:
+        name:
+          type: string
+          description: Prometheus metric name with unit suffix
+          enum:
+            - heatpump_power_consumption_joules
+            - office_energy_use_joules
+            - dc_water_usage_cubic_meters
+            - office_water_usage_cubic_meters
+            - total_generator_energy_joules
+            - generator_load_factor_ratio
+            - grid_transformers_energy_joules
+            - onsite_renewable_energy_joules
+            - it_power_usage_level1_joules
+            - it_power_usage_level2_joules
+            - renewable_energy_certificates_joules
+            - grid_emission_factor_grams
+            - backup_emission_factor_grams
+            - electricity_source
+            - pue_1_ratio
+            - pue_2_ratio
+        unit:
+          type: string
+          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+          description: Prometheus metric family
+        granularitySeconds:
+          type: integer
+          description: Time series data granularity in seconds
+          default: 30
+        labels:
+          type: object
+          required:
+            - facility_id
+            - country_code
+          properties:
+            facility_id:
+              type: string
+              description: Facility identifier
+            country_code:
+              type: string
+              description: ISO 3166-1 alpha-3 country code
+
+    TimeSeriesConfig:
+      type: object
+      required:
+        - endpoint
+        - dataPoints
+      properties:
+        endpoint:
+          type: string
+          description: Time series endpoint URL with port number
+          example: https://timeseries.registry.example.com:9090
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesDataPoint'
+          description: List of time series metrics available for streaming
+
+    FacilityResponse:
+      allOf:
+        - $ref: '#/components/schemas/FacilityCreate'
+        - type: object
+          required:
+            - id
+            - location
+            - countryCode
+            - timeSeriesConfig
+          properties:
+            id:
+              type: string
+              description: Unique facility identifier (format FACILITY-[COUNTRY_CODE]-ID)
+              example: FACILITY-NLD-001
+            countryCode:
+              type: string
+              description: ISO 3166-1 alpha-3 country code derived from location
+              example: NLD
+            timeSeriesConfig:
+              $ref: '#/components/schemas/TimeSeriesConfig'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+
+  x-supported-timeseries-metrics:
+    description: List of all supported time series metrics for facility monitoring
+    metrics:
+      - name: heatpump_power_consumption_joules
+        unit: Energy
+        description: Amount of electricity used by the heat pump to generate heat
+      - name: office_energy_use_joules
+        unit: Energy
+        description: Amount of electricity used by the office
+      - name: dc_water_usage_cubic_meters
+        unit: Length
+        description: Amount of fresh water used by the DC (m3)
+      - name: office_water_usage_cubic_meters
+        unit: Length
+        description: Amount of fresh water used by the office (m3)
+      - name: total_generator_energy_joules
+        unit: Energy
+        description: Total energy output of the generators running
+      - name: generator_load_factor_ratio
+        unit: Percent
+        description: Average load factor of all generators running
+      - name: grid_transformers_energy_joules
+        unit: Energy
+        description: Sum of energy output of all transformers
+      - name: onsite_renewable_energy_joules
+        unit: Energy
+        description: Sum of energy produced of all on-site renewable energy sources
+      - name: it_power_usage_level1_joules
+        unit: Energy
+        description: Sum of power usage measured at UPS systems output
+      - name: it_power_usage_level2_joules
+        unit: Energy
+        description: Sum of power usage measured at PDU outputs in each rack
+      - name: renewable_energy_certificates_joules
+        unit: Energy
+        description: Energy covered by annually matched green energy certificates
+      - name: grid_emission_factor_grams
+        unit: Mass
+        description: The current grid emission factor (g/CO2-eq per kWh)
+      - name: backup_emission_factor_grams
+        unit: Mass
+        description: The current backup power emission factor (g/CO2-eq per kWh)
+      - name: electricity_source
+        unit: Value
+        description: 1 for grid; 2 for backup generators
+      - name: pue_1_ratio
+        unit: Percentage
+        description: Power usage effectiveness measured from the output of the UPS systems for IT load
+      - name: pue_2_ratio
+        unit: Percentage
+        description: Power usage effectiveness measured from the output of the PDU systems for IT load
+
+tags:
+  - name: Supported Time Series Metrics
+    description: |
+      The following metrics are supported for streaming time series data. When registering a facility, you will receive the endpoint information as well as labels for Prometheus.
+      
+      ## Energy Metrics
+      - `heatpump_power_consumption_joules`: Heat pump electricity consumption
+      - `office_energy_use_joules`: Office electricity consumption
+      - `total_generator_energy_joules`: Generator energy output
+      - `grid_transformers_energy_joules`: Transformer energy output
+      - `onsite_renewable_energy_joules`: On-site renewable energy production
+      - `it_power_usage_level1_joules`: IT power at UPS output
+      - `it_power_usage_level2_joules`: IT power at PDU output
+      - `renewable_energy_certificates_joules`: Green energy certificates
+      - `grid_emission_factor_grams`: The current grid emission factor (g/CO2-eq per kWh)
+      - `backup_emission_factor_grams`: The current backup power emission factor (g/CO2-eq per kWh)
+      - `electricity_source`: 1 for grid; 2 for backup generators
+      - `pue_1_ratio`: Power usage effectiveness measured from the output of the UPS systems for IT load
+      - `pue_2_ratio`: Power usage effectiveness measured from the output of the PDU systems for IT load
+      
+      ## Water Usage Metrics
+      - `dc_water_usage_cubic_meters`: Data center water consumption
+      - `office_water_usage_cubic_meters`: Office water consumption
+      
+      ## Operational Metrics
+      - `generator_load_factor_ratio`: Generator load factor (0-1)
