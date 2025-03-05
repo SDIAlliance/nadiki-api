@@ -267,7 +267,7 @@ components:
                 description: Aggregated value over the time period
               unit:
                 type: string
-                enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+                enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
                 description: Unit of the metric
               granularitySeconds:
                 type: integer
@@ -392,7 +392,7 @@ components:
           description: Prometheus metric name with unit suffix
         unit:
           type: string
-          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
           description: Prometheus metric family
         description:
           type: string
@@ -428,7 +428,7 @@ components:
             - pue_2_ratio
         unit:
           type: string
-          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
+          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
           description: Prometheus metric family
         granularitySeconds:
           type: integer
@@ -552,10 +552,10 @@ components:
         unit: Value
         description: 1 for grid; 2 for backup generators
       - name: pue_1_ratio
-        unit: Percentage
+        unit: Percent
         description: Power usage effectiveness measured from the output of the UPS systems for IT load
       - name: pue_2_ratio
-        unit: Percentage
+        unit: Percent
         description: Power usage effectiveness measured from the output of the PDU systems for IT load
 
 tags:
