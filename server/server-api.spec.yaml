@@ -158,44 +158,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /servers/{serverId}/query:
-    parameters:
-      - name: serverId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Unique server identifier (format SERVER-[FACILITY_ID]-[RACK_ID]-[SERVER_ID])
-    post:
-      summary: Query server metrics
-      description: Retrieve aggregated time series metrics for a server over a specified time period
-      operationId: queryServerMetrics
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ServerMetricsQuery'
-      responses:
-        '200':
-          description: Aggregated metrics data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerMetricsQueryResponse'
-        '400':
-          description: Invalid query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Server not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
 components:
   schemas:
     CPU:
@@ -237,7 +199,7 @@ components:
           type: string
           description: FPGA type identifier
 
-    HardDisk:
+    StorageDevice:
       type: object
       required:
         - vendor
@@ -294,26 +256,16 @@ components:
         number_of_memory_units:
           type: integer
           description: Number of memory units installed
-        hard_disks:
+        storage_devices:
           type: array
           items:
-            $ref: '#/components/schemas/HardDisk'
-          description: Array of installed hard disks
-        total_gpus:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Total number of GPUs installed
+            $ref: '#/components/schemas/StorageDevice'
+          description: Array of installed storage devices
         installed_gpus:
           type: array
           items:
             $ref: '#/components/schemas/GPU'
           description: Array of installed GPUs
-        total_fpgas:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Total number of FPGAs installed
         installed_fpgas:
           type: array
           items:
@@ -414,90 +366,6 @@ components:
             updatedAt:
               type: string
               format: date-time
-
-    ServerMetricsQuery:
-      type: object
-      required:
-        - startTime
-        - endTime
-        - aggregation
-      properties:
-        startTime:
-          type: string
-          format: date-time
-          description: Start timestamp for the query period
-        endTime:
-          type: string
-          format: date-time
-          description: End timestamp for the query period
-        aggregation:
-          type: string
-          enum: [sum, average]
-          description: Aggregation function to apply over the time period
-        metrics:
-          type: array
-          description: Optional list of specific metrics to query. If not provided, all available metrics will be returned.
-          items:
-            type: string
-            pattern: ^(cpu_energy_consumption_joules|server_energy_consumption_joules)$
-
-    ServerMetricsQueryResponse:
-      type: object
-      required:
-        - facility_id
-        - rack_id
-        - server_id
-        - startTime
-        - endTime
-        - aggregation
-        - metrics
-      properties:
-        facility_id:
-          type: string
-          description: Facility identifier
-        rack_id:
-          type: string
-          description: Rack identifier
-        server_id:
-          type: string
-          description: Server identifier (format SERVER-[FACILITY_ID]-[RACK_ID]-[SERVER_ID])
-        startTime:
-          type: string
-          format: date-time
-          description: Start timestamp of the query period
-        endTime:
-          type: string
-          format: date-time
-          description: End timestamp of the query period
-        aggregation:
-          type: string
-          enum: [sum, average]
-          description: Aggregation function that was applied
-        metrics:
-          type: array
-          items:
-            type: object
-            required:
-              - name
-              - value
-              - unit
-              - granularitySeconds
-            properties:
-              name:
-                type: string
-                description: Name of the metric
-                pattern: ^(cpu_energy_consumption_joules|server_energy_consumption_joules)$
-              value:
-                type: number
-                format: float
-                description: Aggregated value over the time period
-              unit:
-                type: string
-                enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
-                description: Unit of the metric
-              granularitySeconds:
-                type: integer
-                description: Original granularity of the data points in seconds
 
     Error:
       type: object
