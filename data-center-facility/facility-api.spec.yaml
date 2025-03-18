@@ -244,6 +244,9 @@ components:
           type: number
           format: float
           description: Total white space (m2)
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
 
     FacilityUpdate:
       allOf:

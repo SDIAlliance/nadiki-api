@@ -279,6 +279,9 @@ components:
           enum: [direct-to-chip, immersion, back-door-liquid, back-door-fan, air]
           default: air
           description: Type of cooling system used for this server
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
 
     ServerUpdate:
       allOf:

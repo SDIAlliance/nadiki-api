@@ -190,6 +190,9 @@ components:
         product_passport:
           type: object
           description: LCA product passport data
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
           
     RackUpdate:
       allOf:
