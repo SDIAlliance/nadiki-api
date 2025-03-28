@@ -295,24 +295,27 @@ components:
     ServerTimeSeriesDataPoint:
       type: object
       required:
-        - name
-        - unit
+        - measurement
+        - field
         - granularitySeconds
-        - labels
+        - tags
       properties:
-        name:
+        measurement:
           type: string
-          description: Prometheus metric name with unit suffix
+          description: Name of the Influx measurement
+          enum:
+            - facility
+            - rack
+            - server
+        field:
+          type: string
+          description: Metric name with unit suffix
           pattern: /^(cpu_energy_consumption_joules|server_energy_consumption_joules)$/
-        unit:
-          type: string
-          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass]
-          description: Prometheus metric family
         granularitySeconds:
           type: integer
           description: Time series data granularity in seconds
           default: 30
-        labels:
+        tags:
           type: object
           required:
             - facility_id
@@ -337,12 +340,27 @@ components:
       type: object
       required:
         - endpoint
+        - org
+        - bucket
+        - token
         - dataPoints
       properties:
         endpoint:
           type: string
-          description: Time series endpoint URL with port number
-          example: https://timeseries.registry.example.com:9090
+          description: InfluxDB endpoint URL with port number
+          example: https://timeseries.registry.example.com:8086
+        org:
+          type: string
+          description: InfluxDB organization to use
+          example: leitmotiv
+        bucket:
+          type: string
+          description: InfluxDB bucket to send data to
+          example: my-bucket
+        token:
+          type: string
+          description: InfluxDB token to use for authentication
+          example: ABCDEFGHIJK
         dataPoints:
           type: array
           items:
