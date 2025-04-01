@@ -97,7 +97,7 @@ For each entity, there is an API specification which handles the registration. E
 | Number of PSUs | number | - | 2 | Assumption | Static | No |  |
 | Total installed memory | number | GB | - | - | Static | No |  |
 | Number of memory units installed | number | - | - | - | Static | No | e.g. 2 memory sticks |
-| Hard-disks array | array | - | - | - | Static | No | An array of objects with disks: Vendor (Samsung), Capacity (TB), Type (NVMe, SSD, HDD, Other) |
+| Storage devices array | array | - | - | - | Static | No | An array of objects with storage devices: Vendor (Samsung), Capacity (TB), Type (NVMe, SSD, HDD, Other) |
 | Total GPUs installed | number | - | 0 | Assumption | Static | No |  |
 | Total FPGA installed | number | - | 0 | Assumption | Static | No |  |
 | Installed FPGAs | array | - | - | - | Static | No | An array of objects with FPGAs: Vendor (Intel), Type (Identifier) |
