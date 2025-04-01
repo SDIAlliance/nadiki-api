@@ -142,136 +142,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   
-  /facilities/{facilityId}/query:
-    parameters:
-      - name: facilityId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Unique facility identifier
-    post:
-      summary: Query facility metrics
-      description: Retrieve aggregated time series metrics for a facility over a specified time period
-      operationId: queryFacilityMetrics
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FacilityMetricsQuery'
-      responses:
-        '200':
-          description: Aggregated metrics data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FacilityMetricsQueryResponse'
-        '400':
-          description: Invalid query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Facility not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
 components:
   schemas:
-    FacilityMetricsQuery:
-      type: object
-      required:
-        - startTime
-        - endTime
-        - aggregation
-      properties:
-        startTime:
-          type: string
-          format: date-time
-          description: Start timestamp for the query period
-        endTime:
-          type: string
-          format: date-time
-          description: End timestamp for the query period
-        aggregation:
-          type: string
-          enum: [sum, average]
-          description: Aggregation function to apply over the time period
-        metrics:
-          type: array
-          description: Optional list of specific metrics to query. If not provided, all available metrics will be returned.
-          items:
-            type: string
-            enum:
-              - heatpump_power_consumption_joules
-              - office_energy_use_joules
-              - dc_water_usage_cubic_meters
-              - office_water_usage_cubic_meters
-              - total_generator_energy_joules
-              - generator_load_factor_ratio
-              - grid_transformers_energy_joules
-              - onsite_renewable_energy_joules
-              - it_power_usage_level1_joules
-              - it_power_usage_level2_joules
-              - renewable_energy_certificates_joules
-              - grid_emission_factor_grams
-              - backup_emission_factor_grams
-              - electricity_source
-              - pue_1_ratio
-              - pue_2_ratio
-
-    FacilityMetricsQueryResponse:
-      type: object
-      required:
-        - facility_id
-        - startTime
-        - endTime
-        - aggregation
-        - metrics
-      properties:
-        facility_id:
-          type: string
-          description: Facility identifier
-        startTime:
-          type: string
-          format: date-time
-          description: Start timestamp of the query period
-        endTime:
-          type: string
-          format: date-time
-          description: End timestamp of the query period
-        aggregation:
-          type: string
-          enum: [sum, average]
-          description: Aggregation function that was applied
-        metrics:
-          type: array
-          items:
-            type: object
-            required:
-              - name
-              - value
-              - unit
-              - granularitySeconds
-            properties:
-              name:
-                type: string
-                description: Name of the metric
-              value:
-                type: number
-                format: float
-                description: Aggregated value over the time period
-              unit:
-                type: string
-                enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
-                description: Unit of the metric
-              granularitySeconds:
-                type: integer
-                description: Original granularity of the data points in seconds
     Location:
       type: object
       required:
@@ -372,6 +244,9 @@ components:
           type: number
           format: float
           description: Total white space (m2)
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
 
     FacilityUpdate:
       allOf:
@@ -380,35 +255,24 @@ components:
           required:
             - location
 
-    SupportedTimeSeriesMetric:
-      type: object
-      required:
-        - name
-        - unit
-        - description
-      properties:
-        name:
-          type: string
-          description: Prometheus metric name with unit suffix
-        unit:
-          type: string
-          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
-          description: Prometheus metric family
-        description:
-          type: string
-          description: Detailed description of what this metric measures
-
     FacilityTimeSeriesDataPoint:
       type: object
       required:
-        - name
-        - unit
+        - measurement
+        - field
         - granularitySeconds
-        - labels
+        - tags
       properties:
-        name:
+        measurement:
           type: string
-          description: Prometheus metric name with unit suffix
+          description: Name of the Influx measurement
+          enum:
+            - facility
+            - rack
+            - server
+        field:
+          type: string
+          description: Metric name with unit suffix
           enum:
             - heatpump_power_consumption_joules
             - office_energy_use_joules
@@ -426,15 +290,11 @@ components:
             - electricity_source
             - pue_1_ratio
             - pue_2_ratio
-        unit:
-          type: string
-          enum: [Time, Temperature, Length, Bytes, Percent, Voltage, "Electric current", Energy, Power, Mass, Value]
-          description: Prometheus metric family
         granularitySeconds:
           type: integer
           description: Time series data granularity in seconds
           default: 30
-        labels:
+        tags:
           type: object
           required:
             - facility_id
@@ -451,12 +311,27 @@ components:
       type: object
       required:
         - endpoint
+        - org
+        - bucket
+        - token
         - dataPoints
       properties:
         endpoint:
           type: string
-          description: Time series endpoint URL with port number
-          example: https://timeseries.registry.example.com:9090
+          description: InfluxDB endpoint URL with port number
+          example: https://timeseries.registry.example.com:8086
+        org:
+          type: string
+          description: InfluxDB organization to use
+          example: leitmotiv
+        bucket:
+          type: string
+          description: InfluxDB bucket to send data to
+          example: my-bucket
+        token:
+          type: string
+          description: InfluxDB token to use for authentication
+          example: ABCDEFGHIJK
         dataPoints:
           type: array
           items:
