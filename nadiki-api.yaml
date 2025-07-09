@@ -1,0 +1,1489 @@
+openapi: 3.0.0
+info:
+  title: Facility Registry API
+  version: 1.0.0
+  description: API for registering and managing data center facilities
+servers:
+  - url: https://api.registry.example.com/v1
+    description: Registry API v1
+tags:
+  - name: Supported Time Series Metrics for Facilities
+    description: >
+      The following metrics are supported for streaming time series data. When
+      registering a facility, you will receive the endpoint information as well
+      as labels for Prometheus.
+
+
+      ## Energy Metrics
+
+      - `heatpump_power_consumption_joules`: Heat pump electricity consumption
+
+      - `office_energy_use_joules`: Office electricity consumption
+
+      - `total_generator_energy_joules`: Generator energy output
+
+      - `grid_transformers_energy_joules`: Transformer energy output
+
+      - `onsite_renewable_energy_joules`: On-site renewable energy production
+
+      - `it_power_usage_level1_joules`: IT power at UPS output
+
+      - `it_power_usage_level2_joules`: IT power at PDU output
+
+      - `renewable_energy_certificates_joules`: Green energy certificates
+
+      - `grid_emission_factor_grams`: The current grid emission factor (g/CO2-eq
+      per kWh)
+
+      - `backup_emission_factor_grams`: The current backup power emission factor
+      (g/CO2-eq per kWh)
+
+      - `electricity_source`: 1 for grid; 2 for backup generators
+
+      - `pue_1_ratio`: Power usage effectiveness measured from the output of the
+      UPS systems for IT load
+
+      - `pue_2_ratio`: Power usage effectiveness measured from the output of the
+      PDU systems for IT load
+
+
+      ## Water Usage Metrics
+
+      - `dc_water_usage_cubic_meters`: Data center water consumption
+
+      - `office_water_usage_cubic_meters`: Office water consumption
+
+
+      ## Operational Metrics
+
+      - `generator_load_factor_ratio`: Generator load factor (0-1)
+    x-displayName: Supported Time Series Metrics for Facilities
+  - name: facility-api.spec_other
+    x-displayName: other
+  - name: Supported Time Series Metrics for Racks
+    description: |
+      The following metrics are supported for streaming time series data:
+
+      ## Energy Metrics
+      - `pdu_N_energy_consumption_joules`: PDU energy consumption readings
+        - Multiple metrics exist based on the number of PDUs in the rack
+        - Example for a rack with 2 PDUs:
+          - `pdu_1_energy_consumption_joules`
+          - `pdu_2_energy_consumption_joules`
+
+      ## Temperature Metrics
+      - `inlet_temperature_celsius`: Inlet cooling temperature
+      - `outlet_temperature_celsius`: Outlet cooling temperature
+    x-displayName: Supported Time Series Metrics for Racks
+  - name: rack-api.spec_other
+    x-displayName: other
+  - name: Metric Mapping
+    description: >
+      The server API supports flexible metric mapping configuration. When
+      registering a server, 
+
+      you can specify how your monitoring system's metrics map to the following
+      target metrics:
+
+
+      ## Supported Target Metrics
+
+      - `server_power_consumption` - Overall server power consumption
+
+      - `cpu_utilization` - CPU usage percentage or time
+
+      - `cpu_power_consumption` - CPU-specific power consumption  
+
+      - `cpu_surface_temperature` - CPU temperature readings
+
+      - `gpu_utilization` - GPU usage percentage
+
+      - `gpu_power_consumption` - GPU power consumption
+
+      - `gpu_memory_utilization` - GPU memory usage
+
+      - `fpga_utilization` - FPGA usage percentage
+
+      - `fpga_power_consumption` - FPGA power consumption
+
+      - `fpga_memory_utilization` - FPGA memory usage
+
+      - `memory_free` - Available memory
+
+      - `memory_available` - Total available memory
+
+      - `memory_utilization` - Memory usage percentage
+
+      - `memory_power` - Memory power consumption
+
+      - `server_fan_speed` - Fan speed (RPM or percentage)
+
+      - `network_traffic_received_bytes` - Network RX bytes
+
+      - `network_traffic_transmitted_bytes` - Network TX bytes
+
+      - `network_traffic_received_packets` - Network RX packets
+
+      - `network_traffic_transmitted_packets` - Network TX packets
+
+      - `storage_read_bytes` - Storage read throughput
+
+      - `storage_written_bytes` - Storage write throughput
+
+      - `storage_read_completed` - Storage read operations
+
+      - `storage_written_completed` - Storage write operations
+    x-displayName: Metric Mapping
+  - name: server-api.spec_other
+    x-displayName: other
+paths:
+  /facilities:
+    post:
+      summary: Register a new facility
+      description: Create a new facility entry in the registry
+      operationId: createFacility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityCreate'
+      responses:
+        '201':
+          description: Facility successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - facility-api.spec_other
+    get:
+      summary: List all facilities
+      description: Retrieve a list of all registered facilities
+      operationId: listFacilities
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of facilities to return
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of facilities to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of facilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FacilityResponse'
+                  total:
+                    type: integer
+                    description: Total number of facilities
+                  limit:
+                    type: integer
+                    description: Number of facilities per page
+                  offset:
+                    type: integer
+                    description: Current offset
+      tags:
+        - facility-api.spec_other
+  /facilities/{facilityId}:
+    parameters:
+      - name: facilityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique facility identifier
+    get:
+      summary: Get facility details
+      description: Retrieve detailed information about a specific facility
+      operationId: getFacility
+      responses:
+        '200':
+          description: Facility details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - facility-api.spec_other
+    put:
+      summary: Update facility
+      description: Update all facility information
+      operationId: updateFacility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityUpdate'
+      responses:
+        '200':
+          description: Facility successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - facility-api.spec_other
+    delete:
+      summary: Delete facility
+      description: Remove a facility from the registry
+      operationId: deleteFacility
+      responses:
+        '204':
+          description: Facility successfully deleted
+        '404':
+          description: Facility not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - facility-api.spec_other
+  /racks:
+    post:
+      summary: Register a new rack
+      description: Create a new rack entry in the registry
+      operationId: createRack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RackCreate'
+      responses:
+        '201':
+          description: Rack successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RackResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - rack-api.spec_other
+    get:
+      summary: List all racks
+      description: Retrieve a list of all registered racks
+      operationId: listRacks
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of racks to return
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of racks to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: facility_id
+          in: query
+          description: Filter racks by facility ID
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of racks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RackResponse'
+                  total:
+                    type: integer
+                    description: Total number of racks
+                  limit:
+                    type: integer
+                    description: Number of racks per page
+                  offset:
+                    type: integer
+                    description: Current offset
+      tags:
+        - rack-api.spec_other
+  /racks/{rackId}:
+    parameters:
+      - name: rackId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique rack identifier (format RACK-[FACILITY_ID]-[RACK_ID])
+    get:
+      summary: Get rack details
+      description: Retrieve detailed information about a specific rack
+      operationId: getRack
+      responses:
+        '200':
+          description: Rack details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RackResponse'
+        '404':
+          description: Rack not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - rack-api.spec_other
+    put:
+      summary: Update rack
+      description: Update all rack information
+      operationId: updateRack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RackUpdate'
+      responses:
+        '200':
+          description: Rack successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RackResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Rack not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - rack-api.spec_other
+    delete:
+      summary: Delete rack
+      description: Remove a rack from the registry
+      operationId: deleteRack
+      responses:
+        '204':
+          description: Rack successfully deleted
+        '404':
+          description: Rack not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - rack-api.spec_other
+  /servers:
+    post:
+      summary: Register a new server
+      description: Create a new server entry in the registry
+      operationId: createServer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerCreate'
+            example:
+              facility_id: FACILITY-NLD-001
+              rack_id: RACK-FACILITY-NLD-001-042
+              cooling_type: air
+              total_cpu_sockets: 2
+              installed_cpus:
+                - vendor: Intel
+                  type: Xeon Gold 6248R
+              number_of_psus: 2
+              total_installed_memory: 256
+              number_of_memory_units: 8
+              metric_mapping:
+                server_power_consumption:
+                  input_metric_unit: Watt
+                  input_metric_type: Gauge
+                  input_metric_name: ipmi_dcmi_power_consumption_watts
+                  measurement_interval: 30
+                cpu_utilization:
+                  input_metric_unit: Seconds
+                  input_metric_type: Counter
+                  input_metric_name: node_cpu_seconds_total
+                  measurement_interval: 15
+                gpu_power_consumption:
+                  - device_name: gpu_0
+                    input_metric_unit: Watt
+                    input_metric_type: Gauge
+                    input_metric_name: nvidia_smi_power_draw_watts
+                    measurement_interval: 15
+                  - device_name: gpu_1
+                    input_metric_unit: Watt
+                    input_metric_type: Gauge
+                    input_metric_name: nvidia_smi_power_draw_watts
+                    measurement_interval: 15
+      responses:
+        '201':
+          description: Server successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - server-api.spec_other
+    get:
+      summary: List all servers
+      description: Retrieve a list of all registered servers
+      operationId: listServers
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of servers to return
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of servers to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: facility_id
+          in: query
+          description: Filter servers by facility ID
+          required: false
+          schema:
+            type: string
+        - name: rack_id
+          in: query
+          description: Filter servers by rack ID
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of servers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServerResponse'
+                  total:
+                    type: integer
+                    description: Total number of servers
+                  limit:
+                    type: integer
+                    description: Number of servers per page
+                  offset:
+                    type: integer
+                    description: Current offset
+      tags:
+        - server-api.spec_other
+  /servers/{serverId}:
+    parameters:
+      - name: serverId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: >-
+          Unique server identifier (format
+          SERVER-[FACILITY_ID]-[RACK_ID]-[SERVER_ID])
+    get:
+      summary: Get server details
+      description: Retrieve detailed information about a specific server
+      operationId: getServer
+      responses:
+        '200':
+          description: Server details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - server-api.spec_other
+    put:
+      summary: Update server
+      description: Update all server information
+      operationId: updateServer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServerUpdate'
+      responses:
+        '200':
+          description: Server successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - server-api.spec_other
+    delete:
+      summary: Delete server
+      description: Remove a server from the registry
+      operationId: deleteServer
+      responses:
+        '204':
+          description: Server successfully deleted
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - server-api.spec_other
+components:
+  schemas:
+    Location:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Latitude coordinate of the facility
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Longitude coordinate of the facility
+    FacilityCreate:
+      type: object
+      required:
+        - location
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        embeddedGhgEmissionsFacility:
+          type: number
+          format: float
+          description: Embodied carbon emissions from facility construction (CO2-eq)
+        lifetimeFacility:
+          type: integer
+          minimum: 1
+          description: Expected lifetime of the facility in years
+          default: 15
+        embeddedGhgEmissionsAssets:
+          type: number
+          format: float
+          description: Sum of GHG emissions embodied in assets
+        lifetimeAssets:
+          type: integer
+          minimum: 1
+          description: Expected average lifetime of assets in years
+          default: 10
+        coolingFluids:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - amount
+            properties:
+              type:
+                type: string
+                description: Type identifier for the cooling fluid
+              amount:
+                type: number
+                format: float
+                description: Amount of cooling fluid (kg or m3)
+              gwpFactor:
+                type: number
+                format: float
+                description: Global Warming Potential factor for this fluid type
+        maintenanceHoursGenerator:
+          type: number
+          format: float
+          description: Annual maintenance runtime hours for generators
+        installedCapacity:
+          type: number
+          format: float
+          description: Installed/rated power capacity (watts)
+        gridPowerFeeds:
+          type: integer
+          minimum: 1
+          description: Number of physical power feeds
+          default: 3
+        designPue:
+          type: number
+          format: float
+          minimum: 1
+          description: Design Power Usage Effectiveness
+          default: 1.4
+        tierLevel:
+          type: integer
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+          description: Certified/rated tier level
+          default: 3
+        whiteSpaceFloors:
+          type: integer
+          minimum: 1
+          description: Number of floors used for white space
+          default: 1
+        totalSpace:
+          type: number
+          format: float
+          description: Total facility space (m2)
+        whiteSpace:
+          type: number
+          format: float
+          description: Total white space (m2)
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
+    FacilityUpdate:
+      allOf:
+        - $ref: '#/components/schemas/FacilityCreate'
+        - type: object
+          required:
+            - location
+    FacilityTimeSeriesDataPoint:
+      type: object
+      required:
+        - measurement
+        - field
+        - granularitySeconds
+        - tags
+      properties:
+        measurement:
+          type: string
+          description: Name of the Influx measurement
+          enum:
+            - facility
+            - rack
+            - server
+        field:
+          type: string
+          description: Metric name with unit suffix
+          enum:
+            - heatpump_power_consumption_joules
+            - office_energy_use_joules
+            - dc_water_usage_cubic_meters
+            - office_water_usage_cubic_meters
+            - total_generator_energy_joules
+            - generator_load_factor_ratio
+            - grid_transformers_energy_joules
+            - onsite_renewable_energy_joules
+            - it_power_usage_level1_joules
+            - it_power_usage_level2_joules
+            - renewable_energy_certificates_joules
+            - grid_emission_factor_grams
+            - backup_emission_factor_grams
+            - electricity_source
+            - pue_1_ratio
+            - pue_2_ratio
+        granularitySeconds:
+          type: integer
+          description: Time series data granularity in seconds
+          default: 30
+        tags:
+          type: object
+          required:
+            - facility_id
+            - country_code
+          properties:
+            facility_id:
+              type: string
+              description: Facility identifier
+            country_code:
+              type: string
+              description: ISO 3166-1 alpha-3 country code
+    FacilityTimeSeriesConfig:
+      type: object
+      required:
+        - endpoint
+        - org
+        - bucket
+        - token
+        - dataPoints
+      properties:
+        endpoint:
+          type: string
+          description: InfluxDB endpoint URL with port number
+          example: https://timeseries.registry.example.com:8086
+        org:
+          type: string
+          description: InfluxDB organization to use
+          example: leitmotiv
+        bucket:
+          type: string
+          description: InfluxDB bucket to send data to
+          example: my-bucket
+        token:
+          type: string
+          description: InfluxDB token to use for authentication
+          example: ABCDEFGHIJK
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityTimeSeriesDataPoint'
+          description: List of time series metrics available for streaming
+    FacilityResponse:
+      allOf:
+        - $ref: '#/components/schemas/FacilityCreate'
+        - type: object
+          required:
+            - id
+            - location
+            - countryCode
+            - timeSeriesConfig
+          properties:
+            id:
+              type: string
+              description: Unique facility identifier (format FACILITY-[COUNTRY_CODE]-ID)
+              example: FACILITY-NLD-001
+            countryCode:
+              type: string
+              description: ISO 3166-1 alpha-3 country code derived from location
+              example: NLD
+            timeSeriesConfig:
+              $ref: '#/components/schemas/FacilityTimeSeriesConfig'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+    RackCreate:
+      type: object
+      required:
+        - facility_id
+      properties:
+        facility_id:
+          type: string
+          description: ID of the facility where the rack is located
+        total_available_power:
+          type: number
+          format: float
+          description: Total available power in kW
+          default: 5
+        total_available_cooling_capacity:
+          type: number
+          format: float
+          description: Total available cooling capacity in kW
+          default: 5
+        number_of_pdus:
+          type: integer
+          minimum: 1
+          description: Number of PDUs in the rack
+          default: 2
+        power_redundancy:
+          type: integer
+          minimum: 1
+          description: Number of power feeds used for redundancy
+          default: 2
+        product_passport:
+          type: object
+          description: LCA product passport data
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
+    RackUpdate:
+      allOf:
+        - $ref: '#/components/schemas/RackCreate'
+        - type: object
+          required:
+            - facility_id
+    RackTimeSeriesDataPoint:
+      type: object
+      required:
+        - measurement
+        - field
+        - granularitySeconds
+        - tags
+      properties:
+        measurement:
+          type: string
+          description: Name of the Influx measurement
+          enum:
+            - facility
+            - rack
+            - server
+        field:
+          type: string
+          description: |
+            Prometheus metric name with unit suffix. For PDU metrics, 
+            the name must follow the pattern 'pdu_N_energy_consumption_joules' 
+            where N is the PDU number (1 to number_of_pdus)
+          pattern: >-
+            /^(pdu_[1-9][0-9]*_energy_consumption_joules|inlet_temperature_celsius|outlet_temperature_celsius)$/
+        granularitySeconds:
+          type: integer
+          description: Time series data granularity in seconds
+          default: 30
+        tags:
+          type: object
+          required:
+            - facility_id
+            - rack_id
+            - country_code
+          properties:
+            facility_id:
+              type: string
+              description: Facility identifier
+            rack_id:
+              type: string
+              description: Rack identifier (format RACK-[FACILITY_ID]-[RACK_ID])
+            country_code:
+              type: string
+              description: ISO 3166-1 alpha-3 country code
+    RackTimeSeriesConfig:
+      type: object
+      required:
+        - endpoint
+        - org
+        - bucket
+        - token
+        - dataPoints
+      properties:
+        endpoint:
+          type: string
+          description: InfluxDB endpoint URL with port number
+          example: https://timeseries.registry.example.com:8086
+        org:
+          type: string
+          description: InfluxDB organization to use
+          example: leitmotiv
+        bucket:
+          type: string
+          description: InfluxDB bucket to send data to
+          example: my-bucket
+        token:
+          type: string
+          description: InfluxDB token to use for authentication
+          example: ABCDEFGHIJK
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/RackTimeSeriesDataPoint'
+          description: List of time series metrics available for streaming
+    RackResponse:
+      allOf:
+        - $ref: '#/components/schemas/RackCreate'
+        - type: object
+          required:
+            - id
+            - facility_id
+            - timeSeriesConfig
+          properties:
+            id:
+              type: string
+              description: Unique rack identifier (format RACK-[FACILITY_ID]-[RACK_ID])
+              example: RACK-FACILITY-NLD-001-001
+            timeSeriesConfig:
+              $ref: '#/components/schemas/RackTimeSeriesConfig'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    MetricMappingConfiguration:
+      type: object
+      required:
+        - input_metric_unit
+        - input_metric_type
+        - input_metric_name
+        - measurement_interval
+      properties:
+        input_metric_unit:
+          type: string
+          enum:
+            - Watt
+            - Seconds
+            - Percentage
+            - Fraction
+            - Bytes
+          description: Unit of the input metric
+        input_metric_type:
+          type: string
+          enum:
+            - Gauge
+            - Counter
+          description: >-
+            Type of metric (Gauge for current values, Counter for cumulative
+            values)
+        input_metric_name:
+          type: string
+          description: Name of the input metric as it appears in the source system
+          example: ipmi_dcmi_power_consumption_watts
+        measurement_interval:
+          type: integer
+          minimum: 1
+          description: Measurement interval in seconds
+        device_name:
+          type: string
+          description: Device name, only used when an array is passed to the target metric
+          example: gpu_0
+    MetricMappingObject:
+      type: object
+      properties:
+        server_power_consumption:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        cpu_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        cpu_power_consumption:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        cpu_surface_temperature:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        gpu_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        gpu_power_consumption:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        gpu_memory_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        fpga_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        fpga_power_consumption:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        fpga_memory_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        memory_free:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        memory_available:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        memory_utilization:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        memory_power:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        server_fan_speed:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        network_traffic_received_bytes:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        network_traffic_transmitted_bytes:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        network_traffic_received_packets:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        network_traffic_transmitted_packets:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        storage_read_bytes:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        storage_written_bytes:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        storage_read_completed:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+        storage_written_completed:
+          oneOf:
+            - $ref: '#/components/schemas/MetricMappingConfiguration'
+            - type: array
+              items:
+                $ref: '#/components/schemas/MetricMappingConfiguration'
+      additionalProperties: false
+      description: Mapping of target metrics to their input configurations
+    CPU:
+      type: object
+      required:
+        - vendor
+        - type
+      properties:
+        vendor:
+          type: string
+          description: CPU vendor (e.g., Intel, AMD)
+        type:
+          type: string
+          description: CPU type identifier
+    GPU:
+      type: object
+      required:
+        - vendor
+        - type
+      properties:
+        vendor:
+          type: string
+          description: GPU vendor (e.g., Nvidia, AMD)
+        type:
+          type: string
+          description: GPU type identifier
+    FPGA:
+      type: object
+      required:
+        - vendor
+        - type
+      properties:
+        vendor:
+          type: string
+          description: FPGA vendor (e.g., Intel, Xilinx)
+        type:
+          type: string
+          description: FPGA type identifier
+    StorageDevice:
+      type: object
+      required:
+        - vendor
+        - capacity
+        - type
+      properties:
+        vendor:
+          type: string
+          description: Disk vendor (e.g., Samsung, Intel)
+        capacity:
+          type: number
+          format: float
+          description: Disk capacity in TB
+        type:
+          type: string
+          enum:
+            - NVMe
+            - SSD
+            - HDD
+            - Other
+          description: Type of storage device
+    ServerCreate:
+      type: object
+      required:
+        - facility_id
+        - rack_id
+        - cooling_type
+      properties:
+        facility_id:
+          type: string
+          description: ID of the facility where the server is located
+        rack_id:
+          type: string
+          description: ID of the rack where the server is installed
+        rated_power:
+          type: number
+          format: float
+          description: Rated power in kW
+        total_cpu_sockets:
+          type: integer
+          minimum: 1
+          default: 2
+          description: Total number of CPU sockets
+        installed_cpus:
+          type: array
+          items:
+            $ref: '#/components/schemas/CPU'
+          description: Array of installed CPUs
+        number_of_psus:
+          type: integer
+          minimum: 1
+          default: 2
+          description: Number of power supply units
+        total_installed_memory:
+          type: integer
+          description: Total installed memory in GB
+        number_of_memory_units:
+          type: integer
+          description: Number of memory units installed
+        storage_devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorageDevice'
+          description: Array of installed storage devices
+        installed_gpus:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPU'
+          description: Array of installed GPUs
+        installed_fpgas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FPGA'
+          description: Array of installed FPGAs
+        product_passport:
+          type: object
+          description: LCA product passport data
+        cooling_type:
+          type: string
+          enum:
+            - direct-to-chip
+            - immersion
+            - back-door-liquid
+            - back-door-fan
+            - air
+          default: air
+          description: Type of cooling system used for this server
+        description:
+          type: string
+          description: Textual description ob the facility for informational purposes
+        metric_mapping:
+          $ref: '#/components/schemas/MetricMappingObject'
+    ServerUpdate:
+      allOf:
+        - $ref: '#/components/schemas/ServerCreate'
+        - type: object
+          required:
+            - facility_id
+            - rack_id
+            - cooling_type
+    ServerTimeSeriesDataPoint:
+      type: object
+      required:
+        - measurement
+        - field
+        - granularitySeconds
+        - tags
+      properties:
+        measurement:
+          type: string
+          description: Name of the Influx measurement
+          enum:
+            - facility
+            - rack
+            - server
+        field:
+          type: string
+          description: >-
+            Metric name to be written to InfluxDB (derived from target_metric in
+            the mapping)
+        granularitySeconds:
+          type: integer
+          description: >-
+            Time series data granularity in seconds (from measurement_interval
+            in the mapping)
+        tags:
+          type: object
+          required:
+            - facility_id
+            - rack_id
+            - server_id
+            - country_code
+          properties:
+            facility_id:
+              type: string
+              description: Facility identifier
+            rack_id:
+              type: string
+              description: Rack identifier
+            server_id:
+              type: string
+              description: >-
+                Server identifier (format
+                SERVER-[FACILITY_ID]-[RACK_ID]-[SERVER_ID])
+            country_code:
+              type: string
+              description: ISO 3166-1 alpha-3 country code
+            device_name:
+              type: string
+              description: >-
+                Device name when multiple devices are mapped to a single target
+                metric
+    ServerTimeSeriesConfig:
+      type: object
+      required:
+        - endpoint
+        - org
+        - bucket
+        - token
+        - dataPoints
+      properties:
+        endpoint:
+          type: string
+          description: InfluxDB endpoint URL with port number
+          example: https://timeseries.registry.example.com:8086
+        org:
+          type: string
+          description: InfluxDB organization to use
+          example: leitmotiv
+        bucket:
+          type: string
+          description: InfluxDB bucket to send data to
+          example: my-bucket
+        token:
+          type: string
+          description: InfluxDB token to use for authentication
+          example: ABCDEFGHIJK
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServerTimeSeriesDataPoint'
+          description: List of time series metrics available for streaming
+    ServerResponse:
+      allOf:
+        - $ref: '#/components/schemas/ServerCreate'
+        - type: object
+          required:
+            - id
+            - timeSeriesConfig
+          properties:
+            id:
+              type: string
+              description: >-
+                Unique server identifier (format
+                SERVER-[FACILITY_ID]-[RACK_ID]-[SERVER_ID])
+              example: SERVER-FACILITY-NLD-001-RACK-001-001
+            timeSeriesConfig:
+              $ref: '#/components/schemas/ServerTimeSeriesConfig'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+  x-supported-facility-timeseries-metrics:
+    description: List of all supported time series metrics for facility monitoring
+    metrics:
+      - name: heatpump_power_consumption_joules
+        unit: Energy
+        description: Amount of electricity used by the heat pump to generate heat
+      - name: office_energy_use_joules
+        unit: Energy
+        description: Amount of electricity used by the office
+      - name: dc_water_usage_cubic_meters
+        unit: Length
+        description: Amount of fresh water used by the DC (m3)
+      - name: office_water_usage_cubic_meters
+        unit: Length
+        description: Amount of fresh water used by the office (m3)
+      - name: total_generator_energy_joules
+        unit: Energy
+        description: Total energy output of the generators running
+      - name: generator_load_factor_ratio
+        unit: Percent
+        description: Average load factor of all generators running
+      - name: grid_transformers_energy_joules
+        unit: Energy
+        description: Sum of energy output of all transformers
+      - name: onsite_renewable_energy_joules
+        unit: Energy
+        description: Sum of energy produced of all on-site renewable energy sources
+      - name: it_power_usage_level1_joules
+        unit: Energy
+        description: Sum of power usage measured at UPS systems output
+      - name: it_power_usage_level2_joules
+        unit: Energy
+        description: Sum of power usage measured at PDU outputs in each rack
+      - name: renewable_energy_certificates_joules
+        unit: Energy
+        description: Energy covered by annually matched green energy certificates
+      - name: grid_emission_factor_grams
+        unit: Mass
+        description: The current grid emission factor (g/CO2-eq per kWh)
+      - name: backup_emission_factor_grams
+        unit: Mass
+        description: The current backup power emission factor (g/CO2-eq per kWh)
+      - name: electricity_source
+        unit: Value
+        description: 1 for grid; 2 for backup generators
+      - name: pue_1_ratio
+        unit: Percent
+        description: >-
+          Power usage effectiveness measured from the output of the UPS systems
+          for IT load
+      - name: pue_2_ratio
+        unit: Percent
+        description: >-
+          Power usage effectiveness measured from the output of the PDU systems
+          for IT load
+  x-supported-rack-timeseries-metrics:
+    description: List of all supported time series metrics for rack monitoring
+    metrics:
+      - name: pdu_N_energy_consumption_joules
+        unit: Energy
+        description: |
+          Energy consumption reading from PDU number N. 
+          Multiple metrics will exist based on number_of_pdus, 
+          e.g., pdu_1_energy_consumption_joules, pdu_2_energy_consumption_joules
+      - name: inlet_temperature_celsius
+        unit: Temperature
+        description: Measurement of inlet cooling temperature (water or air)
+      - name: outlet_temperature_celsius
+        unit: Temperature
+        description: Measurement of outlet cooling temperature (water or air)
+x-tagGroups:
+  - name: Facility Registry API
+    tags:
+      - Supported Time Series Metrics for Facilities
+      - facility-api.spec_other
+  - name: Rack Registry API
+    tags:
+      - Supported Time Series Metrics for Racks
+      - rack-api.spec_other
+  - name: Server Registry API
+    tags:
+      - Metric Mapping
+      - server-api.spec_other
