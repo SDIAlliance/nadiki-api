@@ -1,8 +1,15 @@
 # Goal
 
-Within Kubernetes, we want to be able to calculate the environmental impact indicators below. 
+We want to calculate the environmental impact indicators (see below) of a workload running on a server inside a data center, accounting for all the following assets involved in running that workload:
 
-To do so, we need different entities along the infrastructure to report both static values as well as measured values to a **Central Registry** ('Registar'). From that registry, data can be queried that is needed to calculate the indicators from within Kubernetes.
+* Data Center Facility
+* Rack
+* Server
+
+We do not consider networking equipment/internet connectivity at the moment or external storage systems (tbd).
+
+To do so, we need the different assets along within the infrastructure to report both their defining attributes ('static data') as well as measured values to a **Central Registry** ('Registar'). 
+From that registry, data can enriched, aggregated as needed and be queried by the workload itself to determine it's own total environmental impact (or for a given time period).
 
 ## Entities
 
@@ -12,19 +19,29 @@ The entities which need to register and report data to the Registrar are the fol
 * Rack
 * Server
 
-For each entity, there is an API specification which handles the registration. Each entity can pass numerous static parameters with the registration, for most there is default specified (see below). Upon registration each entity receives a Prometheus-compatible endpoint as well as a list of Prometheus metrics & labels that the measured data should be reported to. It is then up to the respective entity to collect & forward the data to the endpoint.
+For each entity, there is an API specification which handles the registration. Each entity can pass numerous static parameters with the registration, for most there is default specified (see below). Upon registration each entity receives a InfluxDB-compatible endpoint as well as a list of metrics & labels that the measured data should be reported to. It is then up to the respective entity to collect & forward the data to the endpoint.
 
 ## Environmental Impact Indicators
 
-| **Name** | **Unit** | **Description** | **Default** | **Default Source** |
-| --- | --- | --- | --- | --- |
-| Re-used energy | kWh | Amount of energy re-used in the form of heat | 0 | Assumption |
-| Primary energy use | kWh | Total amount of energy used to power the data center | Total installed power capacity of data center | Assumption is 100% of installed capacity = energy consumption |
-| Primary energy use (renewable) | kWh | Grid-based amount of renewable energy used to power the data center | 48% of total energy use | [NL annual average 2023](https://www.cbs.nl/en-gb/news/2024/10/nearly-half-the-electricity-produced-in-the-netherlands-is-now-renewable) |
-| Primary energy use (non-renewable) | kWh | Grid-based amount of non-renewable energy used to power the data center | 52% of total energy use | [NL annual average 2023](https://www.cbs.nl/en-gb/news/2024/10/nearly-half-the-electricity-produced-in-the-netherlands-is-now-renewable) |
-| Climate Change Potential | CO2-eq | Total climate change potential from both embodied emissions as well as energy-related emissions | 0 |  |
-| Fresh Water Use | m3 | Total use of fresh water in the data center facility, including office space | 0 |  |
-| Adiabatic Depletion Potential | kg Sb-eq | Resource consumption from the manufacturing of servers and mechanical & electrical equipment. We focus on mineral consumption here. [More information](https://helpcenter.ecochain.com/en/articles/9588517-explained-environmental-impact-categories#h_84e6d8b486) | 0 |  |
+These are the calculated, output metrics generated from the available data for each entity.
+Each entity supports a `query` API endpoint to retrieve these metrics either as a total or using `from` and `to` timestamps.
+Each of these metrics are `gauge` types that can only increase over time. For example: A Facility's energy consumption, can slow but it can never become zero.
+
+
+| **Name**                           | **Metric**                            | **Unit** | **Update interval** | **Notes**                                                            |
+| ---------------------------------- | ------------------------------------- | -------- | ------------------- | -------------------------------------------------------------------- |
+| Re-used energy                     | total_reused_energy                   | kWh      | 15m                 | Amount of energy re-used (e.g. heat)                                 |
+| Primary energy use[^1]             | total_primary_energy_use              | kWh      | 15m                 |                                                                      |
+| Primary energy use (renewable)[^2] | total_primary_renewable_energy_use    | kWh      | 15m                 |                                                                      |
+| Primary energy use (non-renewable) | total_primary_nonrenewable_energy_use | kWh      | 15m                 |                                                                      |
+| Climate change potential           | total_climate_change_potential        | CO2-eq   | 15m                 | Combining embodied emissions and operational emissions (e.g. energy) |
+| Fresh Water Use                    | total_fresh_water_use                 | m3       | 15m                 |                                                                      |
+| Adiabatic Depletion Potential      | total_adiabatic_depletion_potential   | kg Sb-eq | 15m                 | All components within the entity combined[^3]                        |
+
+[^1]: If we we have no measure of power usage in the facility or of the server, we always default to using the design power capacity of the facility as specified. For example, a facility may have a total power capacity of 10MW, which is the value we are going to use to calculate the primary energy use.
+[^2]: Unless configured for the Facility (e.g. certificates, on-site renewable power production or PPAs), we assume that none of the energy used is renewable.
+[^3]: Depending on the entity (Facility, Server, Rack), the components vary, e.g. they could be electrical and mechanical equipment within a Facility, memory and computing chips within a Server, or PDUs and batteries within a Rack.
+  We focus on mineral consumption here. [More information](https://helpcenter.ecochain.com/en/articles/9588517-explained-environmental-impact-categories#h_84e6d8b486). 
 
 ## Data Center Facility
 
