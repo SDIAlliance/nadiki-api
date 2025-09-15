@@ -172,6 +172,9 @@ components:
         type:
           type: string
           description: CPU type identifier
+        physical_core_count:
+          type: integer
+          minimum: 1
 
     GPU:
       type: object
