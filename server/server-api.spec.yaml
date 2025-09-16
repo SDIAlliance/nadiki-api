@@ -172,6 +172,9 @@ components:
         type:
           type: string
           description: CPU type identifier
+        physical_core_count:
+          type: integer
+          minimum: 1
 
     GPU:
       type: object
@@ -381,6 +384,8 @@ components:
               example: SERVER-FACILITY-NLD-001-RACK-001-001
             timeSeriesConfig:
               $ref: '#/components/schemas/ServerTimeSeriesConfig'
+            boavizta_response:
+              type: object
             createdAt:
               type: string
               format: date-time
