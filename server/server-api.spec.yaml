@@ -384,6 +384,8 @@ components:
               example: SERVER-FACILITY-NLD-001-RACK-001-001
             timeSeriesConfig:
               $ref: '#/components/schemas/ServerTimeSeriesConfig'
+            boavizta_response:
+              type: object
             createdAt:
               type: string
               format: date-time
