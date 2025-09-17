@@ -321,6 +321,7 @@ components:
         - facility_id
         - rack_id
         - cooling_type
+        - exptected_lifetime
       properties:
         facility_id:
           type: string
@@ -339,6 +340,12 @@ components:
           minimum: 1
           default: 2
           description: Total number of CPU sockets
+        exptected_lifetime:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 3
+          description: Expected lifetime of the server hardware
         installed_cpus:
           type: array
           items:

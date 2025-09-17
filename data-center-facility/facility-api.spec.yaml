@@ -262,6 +262,7 @@ components:
       required:
         - location
         - installedCapacity
+        - lifetimeFacility
       properties:
         location:
           $ref: '#/components/schemas/Location'
@@ -269,18 +270,13 @@ components:
           type: number
           format: float
           description: Installed/rated power capacity in watts (required for impact assessment scaling)
-        impact_assessment:
+        impactAssessment:
           $ref: '#/components/schemas/ImpactAssessment'
         lifetimeFacility:
           type: integer
           minimum: 1
           description: Expected lifetime of the facility in years
           default: 20
-        lifetimeAssets:
-          type: integer
-          minimum: 1
-          description: Expected average lifetime of assets in years
-          default: 10
         coolingFluids:
           type: array
           items:
