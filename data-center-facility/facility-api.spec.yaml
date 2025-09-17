@@ -277,6 +277,11 @@ components:
           minimum: 1
           description: Expected lifetime of the facility in years
           default: 20
+        totalNumberOfServers:
+          type: integer
+          minimum: 1
+          description: How many servers are currently housed in the facility
+          default: 0
         coolingFluids:
           type: array
           items:
