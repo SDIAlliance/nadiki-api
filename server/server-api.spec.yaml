@@ -238,20 +238,10 @@ components:
           format: float
           description: Natural land transformation impact in m2. If left blank, will be retrieved from Boavizta API according to server specifications.
           default: 0
-        water_depletion:
+        abiotic_depletion_potential:
           type: number
           format: float
-          description: Water depletion impact in m3. If left blank, will be retrieved from Boavizta API according to server specifications.
-          default: 0
-        metal_depletion:
-          type: number
-          format: float
-          description: Metal depletion impact in kg Fe eq. If left blank, will be retrieved from Boavizta API according to server specifications.
-          default: 0
-        fossil_depletion:
-          type: number
-          format: float
-          description: Fossil depletion impact in kg oil eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          description: Resource depletion in kgSbeq. If left blank, will be retrieved from Boavizta API according to server specifications.
           default: 0
 
     CPU:
