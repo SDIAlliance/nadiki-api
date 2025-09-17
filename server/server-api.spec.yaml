@@ -160,6 +160,100 @@ paths:
 
 components:
   schemas:
+    ImpactAssessment:
+      type: object
+      properties:
+        climate_change:
+          type: number
+          format: float
+          description: Climate change impact in kg CO2 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        ozone_depletion:
+          type: number
+          format: float
+          description: Ozone depletion impact in kg CFC-11 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        human_toxicity:
+          type: number
+          format: float
+          description: Human toxicity impact in kg 1,4-DB eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        photochemical_oxidant_formation:
+          type: number
+          format: float
+          description: Photochemical oxidant formation impact in kg NMVOC. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        particulate_matter_formation:
+          type: number
+          format: float
+          description: Particulate matter formation impact in kg PM10 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        ionizing_radiation:
+          type: number
+          format: float
+          description: Ionizing radiation impact in kg U235 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        terrestrial_acidification:
+          type: number
+          format: float
+          description: Terrestrial acidification impact in kg SO2 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        freshwater_eutrophication:
+          type: number
+          format: float
+          description: Freshwater eutrophication impact in kg P eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        marine_eutrophication:
+          type: number
+          format: float
+          description: Marine eutrophication impact in kg N eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        terrestrial_ecotoxicity:
+          type: number
+          format: float
+          description: Terrestrial ecotoxicity impact in kg 1,4-DB eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        freshwater_ecotoxicity:
+          type: number
+          format: float
+          description: Freshwater ecotoxicity impact in kg 1,4-DB eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        marine_ecotoxicity:
+          type: number
+          format: float
+          description: Marine ecotoxicity impact in kg 1,4-DB eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        agricultural_land_occupation:
+          type: number
+          format: float
+          description: Agricultural land occupation impact in m2a. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        urban_land_occupation:
+          type: number
+          format: float
+          description: Urban land occupation impact in m2a. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        natural_land_transformation:
+          type: number
+          format: float
+          description: Natural land transformation impact in m2. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        water_depletion:
+          type: number
+          format: float
+          description: Water depletion impact in m3. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        metal_depletion:
+          type: number
+          format: float
+          description: Metal depletion impact in kg Fe eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+        fossil_depletion:
+          type: number
+          format: float
+          description: Fossil depletion impact in kg oil eq. If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
+
     CPU:
       type: object
       required:
@@ -234,6 +328,8 @@ components:
         rack_id:
           type: string
           description: ID of the rack where the server is installed
+        impact_assessment:
+          $ref: '#/components/schemas/ImpactAssessment'
         rated_power:
           type: number
           format: float
