@@ -168,6 +168,11 @@ components:
           format: float
           description: Climate change impact in kg CO2 eq. If left blank, will be retrieved from Boavizta API according to server specifications.
           default: 0
+        primary_energy_use:
+          type: number
+          format: float
+          description: Energy used to manufacture the server (kWh). If left blank, will be retrieved from Boavizta API according to server specifications.
+          default: 0
         ozone_depletion:
           type: number
           format: float
