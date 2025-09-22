@@ -163,7 +163,7 @@ components:
           maximum: 180
           description: Longitude coordinate of the facility
 
-    ImpactAssessment:
+    FacilityImpactAssessment:
       type: object
       properties:
         climate_change:
@@ -271,7 +271,7 @@ components:
           format: float
           description: Installed/rated power capacity in watts (required for impact assessment scaling)
         impactAssessment:
-          $ref: '#/components/schemas/ImpactAssessment'
+          $ref: '#/components/schemas/FacilityImpactAssessment'
         lifetimeFacility:
           type: integer
           minimum: 1
@@ -281,7 +281,8 @@ components:
           type: integer
           minimum: 1
           description: How many servers are currently housed in the facility
-          default: 0
+          # the 0 must be quoted, otherwise the generated code throws weird exceptions
+          default: "0"
         coolingFluids:
           type: array
           items:

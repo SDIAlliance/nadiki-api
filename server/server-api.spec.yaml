@@ -160,7 +160,7 @@ paths:
 
 components:
   schemas:
-    ImpactAssessment:
+    ServerImpactAssessment:
       type: object
       properties:
         climate_change:
@@ -324,8 +324,8 @@ components:
         rack_id:
           type: string
           description: ID of the rack where the server is installed
-        impact_assessment:
-          $ref: '#/components/schemas/ImpactAssessment'
+        impactAssessment:
+          $ref: '#/components/schemas/ServerImpactAssessment'
         rated_power:
           type: number
           format: float
