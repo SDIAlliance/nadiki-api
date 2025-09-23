@@ -163,31 +163,126 @@ components:
           maximum: 180
           description: Longitude coordinate of the facility
 
+    FacilityImpactAssessment:
+      type: object
+      properties:
+        climate_change:
+          type: number
+          format: float
+          description: Climate change impact in kg CO2 eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 608571.43
+        ozone_depletion:
+          type: number
+          format: float
+          description: Ozone depletion impact in kg CFC-11 eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 4.94
+        human_toxicity:
+          type: number
+          format: float
+          description: Human toxicity impact in kg 1,4-DB eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 2622857.14
+        photochemical_oxidant_formation:
+          type: number
+          format: float
+          description: Photochemical oxidant formation impact in kg NMVOC. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 2194.29
+        particulate_matter_formation:
+          type: number
+          format: float
+          description: Particulate matter formation impact in kg PM10 eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 2302.86
+        ionizing_radiation:
+          type: number
+          format: float
+          description: Ionizing radiation impact in kg U235 eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 88000.00
+        terrestrial_acidification:
+          type: number
+          format: float
+          description: Terrestrial acidification impact in kg SO2 eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 4142.86
+        freshwater_eutrophication:
+          type: number
+          format: float
+          description: Freshwater eutrophication impact in kg P eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 1257.14
+        marine_eutrophication:
+          type: number
+          format: float
+          description: Marine eutrophication impact in kg N eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 720.00
+        terrestrial_ecotoxicity:
+          type: number
+          format: float
+          description: Terrestrial ecotoxicity impact in kg 1,4-DB eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 971.43
+        freshwater_ecotoxicity:
+          type: number
+          format: float
+          description: Freshwater ecotoxicity impact in kg 1,4-DB eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 29142.86
+        marine_ecotoxicity:
+          type: number
+          format: float
+          description: Marine ecotoxicity impact in kg 1,4-DB eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 33714.29
+        agricultural_land_occupation:
+          type: number
+          format: float
+          description: Agricultural land occupation impact in m2a. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 70571.43
+        urban_land_occupation:
+          type: number
+          format: float
+          description: Urban land occupation impact in m2a. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 9000.00
+        natural_land_transformation:
+          type: number
+          format: float
+          description: Natural land transformation impact in m2. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 594.29
+        water_depletion:
+          type: number
+          format: float
+          description: Water depletion impact in m3. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 4485.71
+        metal_depletion:
+          type: number
+          format: float
+          description: Metal depletion impact in kg Fe eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 734285.71
+        fossil_depletion:
+          type: number
+          format: float
+          description: Fossil depletion impact in kg oil eq. Default derived for a 1 MW data center and scaled according to installedCapacity.
+          default: 1042857.1
+
     FacilityCreate:
       type: object
       required:
         - location
+        - installedCapacity
+        - lifetimeFacility
       properties:
         location:
           $ref: '#/components/schemas/Location'
-        embeddedGhgEmissionsFacility:
+        installedCapacity:
           type: number
           format: float
-          description: Embodied carbon emissions from facility construction (CO2-eq)
+          description: Installed/rated power capacity in watts (required for impact assessment scaling)
+        impactAssessment:
+          $ref: '#/components/schemas/FacilityImpactAssessment'
         lifetimeFacility:
           type: integer
           minimum: 1
           description: Expected lifetime of the facility in years
-          default: 15
-        embeddedGhgEmissionsAssets:
-          type: number
-          format: float
-          description: Sum of GHG emissions embodied in assets
-        lifetimeAssets:
+          default: 20
+        totalNumberOfServers:
           type: integer
           minimum: 1
-          description: Expected average lifetime of assets in years
-          default: 10
+          description: How many servers are currently housed in the facility
+          # the 0 must be quoted, otherwise the generated code throws weird exceptions
+          default: "0"
         coolingFluids:
           type: array
           items:
@@ -211,10 +306,6 @@ components:
           type: number
           format: float
           description: Annual maintenance runtime hours for generators
-        installedCapacity:
-          type: number
-          format: float
-          description: Installed/rated power capacity (watts)
         gridPowerFeeds:
           type: integer
           minimum: 1
